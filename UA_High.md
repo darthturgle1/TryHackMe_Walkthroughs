@@ -86,3 +86,47 @@ A status code of 400 or greater means that we cannot access the directory. As a 
 Going to Firefox and searching http://ua.thm/index.html gave me the normal web page which seems not to contain anything of value. As a result, we will scan /assets for directories.
 
 ## Directory search (/assets)
+Going to Firefox and typing **http://ua.thm/assets** yields a blank page. However, I decided to search for directories within **/assets**:
+`gobuster dir -u http://ua.thm/assets -w /usr/share/wordlists/dirb/common.txt`
+
+This produced the following results:
+```
+===============================================================
+Gobuster v3.6
+by OJ Reeves (@TheColonial) & Christian Mehlmauer (@firefart)
+===============================================================
+[+] Url:                     http://ua.thm/assets
+[+] Method:                  GET
+[+] Threads:                 10
+[+] Wordlist:                /usr/share/wordlists/dirb/common.txt
+[+] Negative Status codes:   404
+[+] User Agent:              gobuster/3.6
+[+] Timeout:                 10s
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+/.hta                 (Status: 403) [Size: 271]
+/.htaccess            (Status: 403) [Size: 271]
+/.htpasswd            (Status: 403) [Size: 271]
+/images               (Status: 301) [Size: 308] [--> http://ua.thm/assets/images/]
+/index.php            (Status: 200) [Size: 0]
+Progress: 4614 / 4615 (99.98%)
+===============================================================
+Finished
+===============================================================
+```
+
+I tried using Firefox to visit http://ua.thm/assets/images, but I was denied access. We will now focus our efforts on index.php.
+
+## Directory search (/assets) explained
+As expected, you can skip this section if you understand the purpose of Gobuster. For anyone who is still learning about Gobuster, this scan follows the same logic as the previous one; however, we are scanning **http://ua.thm/assets** rather than **http://ua.thm**. As usual, we ignored the status codes greater than 400.
+
+## index.php and remote command execution
+Use Firefox to navigate to **http://ua.thm/assets/index.php**. I had two reasons for this: I couldn't think of any other attack paths, and I have often seen CTFs where php files are used to gain access.
+
+Admittedly, this section of the writeup is mostly a lucky guess; I was genuinely shocked when it worked! In my Firefox address bar, I typed **http://ua.thm/assets/index.php?cmd=whoami**. This attempt was inspired by the Glitch TryHackMe room, which is among the most difficult rooms to still have an "Easy" rating.
+
+The result was some encoded text: **d3d3LWRhdGEK**. I took this as a good sign since no error message appeared.
+
+## index.php and remote command execution explained
+If you understood the previous section of the walkthrough, feel free to skip this one. If you want to dive deeper into what we just did, here you go:
