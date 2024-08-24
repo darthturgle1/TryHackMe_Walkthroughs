@@ -215,4 +215,37 @@ I recalled that only one image was used in the victim's website, meaning one of 
 **Note**: Like the PHP script earlier, you don't have to understand the workings of these commands. Even I had to use Nakkaya.com as a reference (https://nakkaya.com/2009/04/15/using-netcat-for-file-transfers/). Long story short, remember that **these commands are moving the image to our machine** for further analysis.
 
 ## Steganography (finding hidden data in an image)
-On my attacker machine, in the directory containing **oneforall.jpg**,
+On my attacker machine, I double clicked **oneforall.jpg** to display my image. To my surprise, I received this message: **"Error interpreting JPEG image file (Not a JPEG file: starts with 0x89 0x50)."**
+
+From this message, I deduced that there was an issue with the file signature of **oneforall.jpg**. Using exiftool (`exiftool oneforall.jpg`) confirmed this, as it listed the file type as PNG, not JPEG. I used Wikipedia to view the file signatures for PNG and JPEG, then made the proper adjustments in hexedit on my local machine.
+
+Here are the steps to do so:
+    Enter `hexedit oneforall.jpg`, making sure you are in the same directory as the JPEG file.
+
+    Don't get overwhelmed by the long output; scroll to the top, and replace **89 50 4E 47 0D 0A 1A 0A** with **FF D8 FF E0 00 10 4A 46**.
+
+    Enter CTRL-X to exit; save your work when prompted to do so.
+
+Now, double clicking **oneforall.jpg** should display an image properly. This means we have successfully fixed this JPEG image!
+
+Since we have fixed the image, we can now extract information from it. In the same directory as **oneforall.jpg**, enter `steghide extract -sf oneforall.jpg` to extract hidden files from the image. When prompted for a passphrase, enter PASSWORD1.
+
+It worked! We received a message: **wrote extracted data to "creds.txt"**
+
+Now we need to view the contents of this file: `cat creds.txt`. The output should look like this: "deku:PASSWORD2"
+
+**Note:** Once again, I am not allowed to include the actual password in this writeup. PASSWORD2 is simply a placeholder.
+
+Anyways, it looks like we have Deku's SSH password!
+
+## Steganography explained
+Here is a deeper explanation if anyone needs it:
+
+**File signatures:** Hypothetically, we could name a file almost anything we wanted. For instance, a text file could be called example.jpg, though this would cause a lot of confusion. File signatures are how the system identifies the type of a file beyond just viewing its name. In this case **oneforall.jpg** initially had an incorrect file signature, which we determined based on attempting to view the image and by using **exiftool**. Exiftool is a common means of viewing basic image metadata in CTFs. **The main point** is that we could not extract information from the image until we fixed the file signature.
+
+**Hexedit:** This is the tool we used to replace the incorrect PNG header with the correct JPEG header. For context, I did not have these headers memorized; I merely referenced Wikipedia to find them.
+
+`steghide extract -sf oneforall.jpg`: The `steghide extract -sf` command is often used to extract data from a JPEG file. In this case, it revealed creds.txt, which we read using `cat`.
+
+## SSH into the system as deku
+Although we ignored SSH earlier, it is now a viable means of entry since we have credentials for user deku. Enter `ssh deku@ua.thm`, and enter PASSWORD2 when prompted. We are now logged into the victim machine as user deku, which will hopefully open a route for us to become root (the user with the greatest authority).
