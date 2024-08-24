@@ -220,11 +220,12 @@ On my attacker machine, I double clicked **oneforall.jpg** to display my image. 
 From this message, I deduced that there was an issue with the file signature of **oneforall.jpg**. Using exiftool (`exiftool oneforall.jpg`) confirmed this, as it listed the file type as PNG, not JPEG. I used Wikipedia to view the file signatures for PNG and JPEG, then made the proper adjustments in hexedit on my local machine.
 
 Here are the steps to do so:
-    Enter `hexedit oneforall.jpg`, making sure you are in the same directory as the JPEG file.
 
-    Don't get overwhelmed by the long output; scroll to the top, and replace **89 50 4E 47 0D 0A 1A 0A** with **FF D8 FF E0 00 10 4A 46**.
+1) Enter `hexedit oneforall.jpg`, making sure you are in the same directory as the JPEG file.
 
-    Enter CTRL-X to exit; save your work when prompted to do so.
+2) Don't get overwhelmed by the long output; scroll to the top, and replace **89 50 4E 47 0D 0A 1A 0A** with **FF D8 FF E0 00 10 4A 46**.
+
+3) Enter CTRL-X to exit; save your work when prompted to do so.
 
 Now, double clicking **oneforall.jpg** should display an image properly. This means we have successfully fixed this JPEG image!
 
@@ -249,3 +250,55 @@ Here is a deeper explanation if anyone needs it:
 
 ## SSH into the system as deku
 Although we ignored SSH earlier, it is now a viable means of entry since we have credentials for user deku. Enter `ssh deku@ua.thm`, and enter PASSWORD2 when prompted. We are now logged into the victim machine as user deku, which will hopefully open a route for us to become root (the user with the greatest authority).
+
+We can now enter `cat user.txt` to obtain the flag.
+
+## Checking sudo privileges
+The **sudo** command allows one user to run commands as another user, although there are usually rules in place governing how this works on a given machine. To view those rules, we must enter `sudo -l`. If necessary, re-enter PASSWORD2.
+
+I found this part of the output intriguing:
+
+```
+User deku may run the following commands on myheroacademia:
+    (ALL) /opt/NewComponent/feedback.sh
+```
+
+So, we know that we can run the script feedback.sh as root; clearly, the creators of the room wanted us to use this as a path to privilege escalation. However, our options are limited since we cannot edit **feedback.sh** or its directory.
+
+To better understand my situation, I entered `cat /opt/NewComponent/feedback.sh` and received the following output:
+
+```
+#!/bin/bash
+
+echo "Hello, Welcome to the Report Form       "
+echo "This is a way to report various problems"
+echo "    Developed by                        "
+echo "        The Technical Department of U.A."
+
+echo "Enter your feedback:"
+read feedback
+
+
+if [[ "$feedback" != *"\`"* && "$feedback" != *")"* && "$feedback" != *"\$("* && "$feedback" != *"|"* && "$feedback" != *"&"* && "$feedback" != *";"* && "$feedback" != *"?"* && "$feedback" != *"!"* && "$feedback" != *"\\"* ]]; then
+    echo "It is This:"
+    eval "echo $feedback"
+
+    echo "$feedback" >> /var/log/feedback.txt
+    echo "Feedback successfully saved."
+else
+    echo "Invalid input. Please provide a valid input." 
+fi
+```
+
+Let's analyze this script:
+
+1) `read feedback`: The script is reading user input and storing it in the variable called **feedback**. This means we can interact with this script and (hopefully) exploit it.
+
+2) `[[ "$feedback" != *"\`"* && "$feedback" != *")"* && "$feedback" != *"\$("* && "$feedback" != *"|"* && "$feedback" != *"&"* && "$feedback" != *";"* && "$feedback" != *"?"* && "$feedback" != *"!"* && "$feedback" != *"\\"* ]]`: Clearly, this script is blocking the user from inputting certain characters.
+
+3) `eval "echo $feedback"`: The eval function means that the expression `"echo $feedback"` is being evaluated. (Note that **$feedback** means we are taking the *value* of **feedback**, and that value is whatever we entered when running the program.)
+
+**The key point of this script** is that we can provide malicious input so that the **eval** function performs a command that helps us get root access.
+
+## Exploiting eval:
+WORK IN PROGRESS
