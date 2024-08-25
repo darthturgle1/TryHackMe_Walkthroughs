@@ -313,4 +313,44 @@ bash -c 'echo DATA > $LFILE'
 I have already seen another writeup which used this trick to add a line to the sudoers file, but I chose to use this trick to add my SSH key to the authorized_keys for root. Continue to the next section to learn more about this process.
 
 ## Creating SSH keys
+On your attacker machine, you can generate SSH keys by using the command `ssh-keygen -t rsa -b 4096 -f LOCATION/id_rsa`. (Note that I am using LOCATION as a representation for whatever location you might choose. If you're having trouble deciding, try **~/.ssh**.)
 
+This should output two files: **id_rsa** and **id_rsa.pub**. Enter the command `cat id_rsa.pub`, then copy the resulting public key to your clipboard.
+
+## Exploiting SSH keys
+Switch back to the target machine where you are logged in as Deku. Remember, we are trying to exploit the `eval "echo $feedback"` line of **feedback.sh**. Go ahead and run this script as root using the following: `sudo /opt/NewComponent/feedback.sh`
+
+Based on our research on GTFOBins, a suitable payload would be the following:
+
+`KEY > /root/.ssh/authorized_keys` where KEY is replaced with the contents of your **id_rsa.pub** file.
+
+Enter this payload when the script asks you for feedback.
+
+Now, it's time to test whether this worked. On your attacker machine, in the directory containing your SSH keys, attempt to gain root access using your keys. This can be accomplished using the command `ssh root@ua.thm -i id_rsa`
+
+You now have root access, and you can use `cat /root/root.txt` to claim the final flag!
+
+## Exploiting SSH keys explained
+If you understood the previous section, feel free to exit this walkthrough -- you have now become the number one hero at U.A. High School! If you're still unsure, here's the explanation:
+
+**SSH keys**: When attempting to SSH into a system as some user (designated X), you usually have two options: give the password belonging to X or use an SSH key. In the case of this CTF, we don't have **root**'s password, so it makes sense to use an SSH key.
+
+`KEY > /root/.ssh/authorized_keys`: Once this payload is submitted as input, **feedback.sh** will run the following line: `eval "echo KEY > /root/.ssh/authorized_keys"`. Let's break this down:
+
+1) Bear in mind that you must replace KEY with the actual contents of **id_rsa.pub**.
+
+2) Therefore, we are adding our public key to **root**'s authorized keys. Look at it using this analogy: instead of stealing someone else's key, we programmed the "lock" to use our key instead.
+
+3) `ssh root@ua.thm -i id_rsa`: This command signs in as root via SSH using our private key.
+
+## Conclusion
+This was very involved for an "Easy" room, and it seemed to cross over into "Medium" territory at times. Here are some of the key takeaways:
+- Most CTFs begin with an Nmap scan to view open ports, and this was no exception.
+- HTTP provides a larger attack surface than SSH.
+- Gobuster can help you find directories and files that have accidentally been made public.
+- Keep an eye out for suspicious PHP files when doing CTFs.
+- Hexedit is a useful tool for "fixing" images that are showing the wrong file type.
+- Steghide is great at extracting hidden files from JPEG images.
+- The **eval** function is often exploitable.
+
+Thank you for reading! Good luck with your cybersecurity journey, and God bless!
