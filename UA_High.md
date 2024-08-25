@@ -5,6 +5,9 @@
 Welcome to my walkthrough! This room is one of the most enjoyable CTFs I've completed so far. Let's get started!
 
 ## Setup
+First, deploy the target machine and connect via AttackBox or OpenVPN. I prefer OpenVPN, as it allows me to have my own familiar workspace and no time limit.
+
+
 For convenience, I am adding this room to /etc/hosts so I don't have to remember the IP address.
 
 ```sudo nano /etc/hosts```
@@ -73,12 +76,11 @@ A website (such as ua.thm) can have many components, and directories help organi
 
 Gobuster takes a wordlist (in this case, a list of common directory names) and searches a website for them. Here is the breakdown of the command we used:
 
-**gobuster dir**: This tells us that we are using the gobuster command to find directories. Gobuster has other functions which are beyond the scope of this room.
+**gobuster dir**: This tells our machine that we are using the gobuster command to find directories. Gobuster has other functions which are beyond the scope of this room.
 
-**-u http://ua.thm**: This is the website Gobuster is scanning.
+**-u http://ua.thm**: The -u flag designates the website Gobuster is scanning.
 
-**-w /usr/share/wordlists/dirb/common.txt**: This is a path to a wordlist of common directory names. This is essentially telling Gobuster what directories to look for.
-
+**-w /usr/share/wordlists/dirb/common.txt**: The -w flag designates the path to a wordlist. This is essentially telling gobuster what directories to look for.
 
 Now to explain the results:
 A status code of 400 or greater means that we cannot access the directory. As a result, we only need to look at /index.html and /assets.
@@ -124,7 +126,7 @@ As expected, you can skip this section if you understand the purpose of Gobuster
 ## index.php and remote command execution
 Use Firefox to navigate to **http://ua.thm/assets/index.php**. I had two reasons for this: I couldn't think of any other attack paths, and I have often seen CTFs where php files are used to gain access.
 
-Admittedly, this section of the writeup is mostly a lucky guess; I was genuinely shocked when it worked! In my Firefox address bar, I typed **http://ua.thm/assets/index.php?cmd=whoami**. This attempt was inspired by the Glitch TryHackMe room, which is among the most difficult rooms to still have an "Easy" rating.
+Admittedly, this section of the writeup is mostly a lucky guess; I was genuinely shocked when it worked! In my Firefox address bar, I typed **http://ua.thm/assets/index.php?cmd=whoami**. This attempt was inspired by the "Glitch" TryHackMe room, which is among the most difficult rooms to still have an "Easy" rating.
 
 The result was some encoded text: **d3d3LWRhdGEK**. I took this as a good sign since no error message appeared.
 
@@ -133,8 +135,8 @@ If you understood the previous section of the walkthrough, feel free to skip thi
 
 As I previously mentioned, typing **?cmd=whoami** was a lucky guess based on past experience. Here is what this code means:
 
-`?cmd`: This is adding a parameter called cmd (short for "command"). When misconfigured, this parameter allows the attacker to run commands on the target system.
-`=whoami`: This is the command that will be run, and it should output the name of the current user on the victim machine. This could be replaced with a number of other commands, such as `id`, but the point is that we are using a simple command to verify whether the command ran successful.
+`?cmd`: This is using a parameter called cmd (short for "command"). When misconfigured, this parameter allows the attacker to run commands on the target system.
+`whoami`: This is the command that will be run, and it should output the name of the current user on the victim machine. This could be replaced with a number of other commands, such as `id`, but the point is that we are using a simple command to verify whether the command ran successfully.
 
 **Note:** While I consider sections like this to be fair game in CTFs, it's worth noting that I would never have guessed the answer if I hadn't completed the Glitch room previously. So if you had to get my help on this part, please don't feel badly about it! This sort of guesswork seems pretty rare in CTFs, and this truly is one of those "if you know, you know" sections. **Keep your head up and keep going!**
 
