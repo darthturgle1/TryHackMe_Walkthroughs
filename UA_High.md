@@ -301,4 +301,16 @@ Let's analyze this script:
 **The key point of this script** is that we can provide malicious input so that the **eval** function performs a command that helps us get root access.
 
 ## Exploiting eval:
-WORK IN PROGRESS
+Again, we are trying to exploit the line from **feedback.sh** which reads `eval "echo $feedback"`. In the early stages, I made a key mistake: ignoring the **echo** command. For those who are unfamiliar, **echo** is a fairly harmless command which prints text to the screen. I made multiple attempts at command substitution, but they were foiled by the script's refusal to allow input containing parenthesis.
+
+My fortunes changed once I Googled **"echo GTFOBins."** (GTFOBins is a website providing tips for privilege escalation; I have used it in approximately 50% of the CTFs I have completed.) Anyways, GTFOBins did not have a designated page about **echo**, but the **echo** command was mentioned a few times in their page regarding Bash.
+
+I was initially overambitious and considered their file read command, but this was once again prevented by the inability to type parenthesis when running **feedback.sh**. After this failure, I recognized that the file write command would be more effective. Here is GTFOBins' command:
+```
+export LFILE=file_to_write
+bash -c 'echo DATA > $LFILE'
+```
+I have already seen another writeup which used this trick to add a line to the sudoers file, but I chose to use this trick to add my SSH key to the authorized_keys for root. Continue to the next section to learn more about this process.
+
+## Creating SSH keys
+
